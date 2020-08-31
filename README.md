@@ -7,6 +7,7 @@
 - Written in Swift 5
 - iOS 10+ support
 - Rotation, Dynamic Type and Dark Mode support
+- Haptic feedback
 - Available via Swift Package Manager
 
 ##### Installation
