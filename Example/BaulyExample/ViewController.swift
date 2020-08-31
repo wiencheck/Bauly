@@ -26,10 +26,15 @@ class ViewController: UIViewController {
             Btw, I support mutli-line text and emojis easily
             😏
             """
-        }, in: view.window, feedbackStyle: .medium, pressHandler: {
-            self.newColor = ([
-                .red, .yellow, .blue, .green, .purple, .orange
-            ] as [UIColor]).randomElement()
+        }, dismissAfter: 1.5, in: view.window, feedbackStyle: .medium, pressHandler: {
+//            self.newColor = ([
+//                .red, .yellow, .blue, .green, .purple, .orange
+//            ] as [UIColor]).randomElement()
+            if #available(iOS 13.0, *) {
+                self.view.window?.overrideUserInterfaceStyle = .dark
+            } else {
+                // Fallback on earlier versions
+            }
         }, completionHandler: {
             sender.setTitle("Present again", for: .normal)
         })

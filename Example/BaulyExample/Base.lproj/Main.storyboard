@@ -25,6 +25,7 @@
                                 </connections>
                             </button>
                         </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
                             <constraint firstItem="s1z-jN-hez" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="3yu-VU-SBB"/>
                             <constraint firstItem="s1z-jN-hez" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="h7Z-fm-gCw"/>
