@@ -55,14 +55,14 @@ Bauly.shared.present(configurationHandler: { bauly in
     bauly.title = "This is Bauly!"
     bauly.subtitle = """
     Press me to have a little fun with colors.
-    Btw, I support mutli-line text and emojis easily
+    Btw, I support mutli-lined text and emojis easily
     😏
     """
     }...)
 ```
 
 ##### Displaying banner immediately
-Both methods used for presenting a banner have a *sister* method which forces the banner to be displayed immediately. It has the same arguments as *normal* methods.
+Both methods used for presenting a banner have a *sibling* method which forces the banner to be displayed immediately. It has the same arguments as *normal* methods.
 
 ```swift
 func forcePresent(...)
@@ -71,9 +71,25 @@ func forcePresent(...)
 ##### Dismissing banner
 
 To manually dismiss the banner use the ```dismiss``` method
+
 ```swift
 func dismiss(completionHandler: (() -> Void)?)
 ```
+
+**Note** You should check if any banner is currently visible before calling this method, by checking the `currentBanner` property, for example:
+
+```swift
+...
+if Bauly.shared.currentBanner == nil {
+    return
+}
+Bauly.shared.dismiss {
+    print("Old banner dismissed!")
+}
+...
+```
+
+It's important because the `completionHandler` of this method doesn't get called if no banner has actually been dismissed.
 
 ### Todos
 
