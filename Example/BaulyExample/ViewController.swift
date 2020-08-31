@@ -26,6 +26,9 @@ class ViewController: UIViewController {
             Btw, I support mutli-line text and emojis easily
             😏
             """
+            if #available(iOS 13.0, *) {
+                bauly.icon = UIImage(systemName: "folder.fill")
+            }
         }, dismissAfter: 1.5, in: view.window, feedbackStyle: .medium, pressHandler: {
 //            self.newColor = ([
 //                .red, .yellow, .blue, .green, .purple, .orange

@@ -157,7 +157,7 @@ final public class BaulyView: UIView {
         shadowLayer.shadowPath = shadowLayer.path
         shadowLayer.shadowOffset = CGSize(width: 0, height: 2.0)
         shadowLayer.shadowOpacity = 0.2
-        shadowLayer.shadowRadius = 2
+        shadowLayer.shadowRadius = 16
         
         layer.insertSublayer(shadowLayer, at: 0)
     }
@@ -243,7 +243,7 @@ private extension BaulyView {
             s.axis = .horizontal
             s.alignment = .center
             s.distribution = .fill
-            s.spacing = 2
+            s.spacing = 12
             return s
         }()
         addSubview(contentStack)
@@ -257,7 +257,7 @@ private extension BaulyView {
             contentStack.widthAnchor.constraint(greaterThanOrEqualToConstant: 96),
             // Constraints for subviews
             iconView.heightAnchor.constraint(equalTo: iconView.widthAnchor),
-            iconView.heightAnchor.constraint(equalToConstant: 28)
+            iconView.heightAnchor.constraint(equalToConstant: 24)
         ])
     }
 }
