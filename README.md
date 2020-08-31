@@ -21,7 +21,7 @@ It manages internally a queue of pending banners. Only one banner can be display
 
 ##### Displaying banner
 To display a banner use one of the following methods:
-```
+```swift
 public func present(title: String, 
                 subtitle: String?, 
                 icon: UIImage?, 
@@ -35,7 +35,7 @@ public func present(title: String,
 ##### Customizing banner
 In addition to methods described above, banners can be presented using methods which provide an entry for directly customizing the banner.
 
-```
+```swift
 func present(configurationHandler: ((BaulyView) -> Void)?, 
             duration: TimeInterval, 
             dismissAfter delay: TimeInterval, 
@@ -47,7 +47,7 @@ func present(configurationHandler: ((BaulyView) -> Void)?,
 
 By calling this method you can customize appearance of the banner and its other properties directly, for example:
 
-```
+```swift
 Bauly.shared.present(configurationHandler: { bauly in
     // Tint is applied to the icon and title of the banner
     bauly.tintColor = .systemPurple
@@ -64,14 +64,14 @@ Bauly.shared.present(configurationHandler: { bauly in
 ##### Displaying banner immediately
 Both methods used for presenting a banner have a *sister* method which forces the banner to be displayed immediately. It has the same arguments as *normal* methods.
 
-```
+```swift
 func forcePresent(...)
 ```
 
 ##### Dismissing banner
 
 To manually dismiss the banner use the ```dismiss``` method
-```
+```swift
 func dismiss(completionHandler: (() -> Void)?)
 ```
 
