@@ -2,7 +2,7 @@
 
 ![Bauly Demo](https://i.imgur.com/tAx7gJd.gif)
 
-**Bauly** is a neat little library used to displaying compact message banners in your app. The design is inspired by stock banners visible in iOS 13 and newer. 
+**Bauly** is a neat little library used to display compact message banners in your app. The design is inspired by stock banners visible in iOS 13 and newer. 
 
 - Written in Swift 5
 - iOS 10+ support
