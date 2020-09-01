@@ -27,7 +27,7 @@ class ViewController: UIViewController {
             😏
             """
             if #available(iOS 13.0, *) {
-                bauly.icon = UIImage(systemName: "folder.fill")
+                bauly.icon = UIImage(systemName: "heart.fill")
             }
         }, dismissAfter: 1.5, in: view.window, feedbackStyle: .medium, pressHandler: {
 //            self.newColor = ([

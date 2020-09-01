@@ -184,7 +184,7 @@ public final class Bauly {
         - completionHandler: Handler called after banner slides out of the screen. If no banner was visible, the handler will not be called. Use the
      */
     public func dismiss(completionHandler: (() -> Void)? = nil) {
-        guard let view = currentBanner, let window = view.window else {
+        guard let view = currentBanner else {
             return
         }
         dismissAction?.cancel()

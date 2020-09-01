@@ -1,6 +1,6 @@
 # Bauly
 
-![Bauly Demo](https://i.imgur.com/tAx7gJd.gif)
+![Bauly Demo](https://i.imgur.com/Gpc7Tol.gif)
 
 **Bauly** is a neat little library used to display compact message banners in your app. The design is inspired by stock banners visible in iOS 13 and newer. 
 
@@ -21,7 +21,7 @@ https://github.com/wiencheck/Bauly.git
 It internally manages a queue of pending banners. Only one banner can be displayed at a time. Remember to call these methods **only from the main thread**.
 
 ##### Displaying banner
-To display a banner, use one of the following methods:
+To display a banner, simply use the `present` method and provide title and other information for the banner:
 ```swift
 public func present(title: String, 
                 subtitle: String?, 
@@ -34,7 +34,7 @@ public func present(title: String,
 ```
 
 ##### Customizing banner
-In addition to the methods described above, banners can be presented using methods which provide the ability for directly customizing the banner.
+In addition to the method described above, banners can be presented using a `present(configurationHandler:...)` method which provides the ability for directly customization of the banner:
 
 ```swift
 func present(configurationHandler: ((BaulyView) -> Void)?, 
@@ -77,7 +77,7 @@ To manually dismiss the banner, use the ```dismiss``` method
 func dismiss(completionHandler: (() -> Void)?)
 ```
 
-**Note** You should check if any banner is currently visible before calling this method, by checking the `currentBanner` property, for example:
+**Note** If you want to use the `completionHandler` of this methods, you should always check if any banner is currently visible before calling this method, by reading the `currentBanner` property, for example:
 
 ```swift
 ...
