@@ -171,6 +171,15 @@ final public class BaulyView: UIView {
             $0.isUserInteractionEnabled = false
         }
     }
+    
+    private func setHighlighted(_ highlighted: Bool) {
+        let alpha: CGFloat = highlighted ? 0.4 : 1
+        UIView.animate(withDuration: 0.16) {
+            self.titleLabel.alpha = alpha
+            self.subtitleLabel.alpha = alpha
+            self.iconView.alpha = alpha
+        }
+    }
 }
 
 // MARK: Handling Tint Color changes
@@ -189,26 +198,21 @@ public extension BaulyView {
 
 // MARK: Touch
 public extension BaulyView {
+    
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesBegan(touches, with: event)
-        UIView.animate(withDuration: 0.16) {
-            self.alpha = 0.6
-        }
+        setHighlighted(true)
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesEnded(touches, with: event)
-        UIView.animate(withDuration: 0.16) {
-            self.alpha = 1
-        }
+        setHighlighted(false)
         pressHandler?()
     }
     
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesCancelled(touches, with: event)
-        UIView.animate(withDuration: 0.2) {
-            self.alpha = 1
-        }
+        setHighlighted(false)
     }
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -257,7 +261,7 @@ private extension BaulyView {
             contentStack.widthAnchor.constraint(greaterThanOrEqualToConstant: 96),
             // Constraints for subviews
             iconView.heightAnchor.constraint(equalTo: iconView.widthAnchor),
-            iconView.heightAnchor.constraint(equalToConstant: 24)
+            iconView.heightAnchor.constraint(equalToConstant: 20)
         ])
     }
 }

@@ -188,7 +188,7 @@ public final class Bauly {
             return
         }
         dismissAction?.cancel()
-        let dismissAnimator = self.dismissAnimator(duration: 0.4, window: window) { [weak self, weak view] in
+        let dismissAnimator = self.dismissAnimator { [weak self, weak view] in
             if let view = view {
                 self?.clean(after: view)
             }
@@ -240,7 +240,7 @@ public final class Bauly {
         finalConstraint = view.topAnchor.constraint(equalTo: layoutGuide.topAnchor, constant: Bauly.topMargin)
         
         // Configure dismiss animator
-        let dismissAnimator = self.dismissAnimator(duration: snapshot.duration * 0.56, window: _window) { [weak self, weak view, weak snapshot] in
+        let dismissAnimator = self.dismissAnimator { [weak self, weak view, weak snapshot] in
             snapshot?.completionHandler?()
             guard let view = view else { return }
             self?.clean(after: view)
@@ -278,11 +278,11 @@ public final class Bauly {
         - window: `UIWindow` object of the banner.
         - completionHandler: Action called after banner slides out of the screen.
      */
-    private func dismissAnimator(duration: TimeInterval, window: UIWindow, completionHandler: (() -> Void)?) -> UIViewPropertyAnimator {
-        let animator = UIViewPropertyAnimator(duration: duration, curve: .easeIn) {
+    private func dismissAnimator(completionHandler: (() -> Void)?) -> UIViewPropertyAnimator {
+        let animator = UIViewPropertyAnimator(duration: 0.24, curve: .easeIn) {
             self.finalConstraint.isActive = false
             self.initialConstraint.isActive = true
-            window.layoutIfNeeded()
+            self.currentBanner?.window?.layoutIfNeeded()
         }
         animator.addCompletion { _ in
             completionHandler?()
