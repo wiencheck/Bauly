@@ -6,22 +6,22 @@
 
 - Written in Swift 5
 - iOS 10+ support
-- Rotation, Dynamic Type and Dark Mode support
+- Rotation, Dynamic Type, and Dark Mode support
 - Haptic feedback
 - Available via Swift Package Manager
 
 ##### Installation
-Bauly can be installed via Swift Package Manager. To use it in your project, open Xcode and go to menu *File -> Swift Packages -> Add Package Dependency* and past this repo's address:
+Bauly can be installed via Swift Package Manager. To use it in your project, open Xcode, go to menu *File -> Swift Packages -> Add Package Dependency*, and paste this repo's URL:
 ```
 https://github.com/wiencheck/Bauly.git
 ```
 
 ### Usage
-**Bauly** is managed via `shared` singleton instance.
-It manages internally a queue of pending banners. Only one banner can be displayed at the time. Remember to call methods **only from main thread**.
+**Bauly** is managed via a `shared` singleton instance.
+It internally manages a queue of pending banners. Only one banner can be displayed at a time. Remember to call these methods **only from the main thread**.
 
 ##### Displaying banner
-To display a banner use one of the following methods:
+To display a banner, use one of the following methods:
 ```swift
 public func present(title: String, 
                 subtitle: String?, 
@@ -34,7 +34,7 @@ public func present(title: String,
 ```
 
 ##### Customizing banner
-In addition to methods described above, banners can be presented using methods which provide an entry for directly customizing the banner.
+In addition to the methods described above, banners can be presented using methods which provide the ability for directly customizing the banner.
 
 ```swift
 func present(configurationHandler: ((BaulyView) -> Void)?, 
@@ -46,7 +46,7 @@ func present(configurationHandler: ((BaulyView) -> Void)?,
             completionHandler: (() -> Void)?)
 ```
 
-By calling this method you can customize appearance of the banner and its other properties directly, for example:
+By calling this method, you can customize the appearance of the banner and its other properties directly, for example:
 
 ```swift
 Bauly.shared.present(configurationHandler: { bauly in
@@ -63,7 +63,7 @@ Bauly.shared.present(configurationHandler: { bauly in
 ```
 
 ##### Displaying banner immediately
-Both methods used for presenting a banner have a *sibling* method which forces the banner to be displayed immediately. It has the same arguments as *normal* methods.
+Both methods used for presenting a banner have a *sibling* method which forces the banner to be displayed immediately. It takes the same arguments as *normal* methods.
 
 ```swift
 func forcePresent(...)
@@ -71,7 +71,7 @@ func forcePresent(...)
 
 ##### Dismissing banner
 
-To manually dismiss the banner use the ```dismiss``` method
+To manually dismiss the banner, use the ```dismiss``` method
 
 ```swift
 func dismiss(completionHandler: (() -> Void)?)
@@ -90,7 +90,7 @@ Bauly.shared.dismiss {
 ...
 ```
 
-It's important because the `completionHandler` of this method doesn't get called if no banner has actually been dismissed.
+It's important as the `completionHandler` of this method doesn't get called if no banner has actually been dismissed.
 
 ### Todos
 
