@@ -77,7 +77,7 @@ To manually dismiss the banner, use the ```dismiss``` method
 func dismiss(completionHandler: (() -> Void)?)
 ```
 
-**Note** If you want to use the `completionHandler` of this methods, you should always check if any banner is currently visible before calling this method, by reading the `currentBanner` property, for example:
+**Note** If you want to use the `completionHandler` of this method, you should always check if any banner is currently visible before calling this method, by reading the `currentBanner` property, for example:
 
 ```swift
 ...
@@ -95,7 +95,7 @@ It's important as the `completionHandler` of this method doesn't get called if n
 ### Todos
 
  - Write Tests
- - Add Night Mode
+ - Support dismissal by dragging the banner out of the screen
 
 License
 ----
