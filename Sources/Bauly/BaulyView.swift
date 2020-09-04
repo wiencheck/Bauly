@@ -73,10 +73,14 @@ final public class BaulyView: UIView {
     // MARK: Private properties
     
     /// Unique identifier of the banner.
-    internal var identifier: String?
+    var identifier: String?
     
     /// Action called after pressing the banner.
-    internal var pressHandler: (() -> Void)?
+    var pressHandler: (() -> Void)?
+    
+    private(set)var isTrackingTouch = false
+    
+    private var isHighlighted = false
     
     // MARK: Layout elements
     
@@ -173,6 +177,10 @@ final public class BaulyView: UIView {
     }
     
     private func setHighlighted(_ highlighted: Bool) {
+        if highlighted == isHighlighted {
+            return
+        }
+        isHighlighted = highlighted
         let alpha: CGFloat = highlighted ? 0.4 : 1
         UIView.animate(withDuration: 0.16) {
             self.titleLabel.alpha = alpha
@@ -197,26 +205,44 @@ public extension BaulyView {
 }
 
 // MARK: Touch
-public extension BaulyView {
-    
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        super.touchesBegan(touches, with: event)
-        setHighlighted(true)
+extension BaulyView {
+    private var extendedBounds: CGRect {
+        return bounds
+        .applying(CGAffineTransform(translationX: -bounds.width * 0.4, y: -bounds.height * 0.4))
+        .applying(CGAffineTransform(scaleX: 1.2, y: 2.2))
     }
     
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+    public override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        super.touchesBegan(touches, with: event)
+        setHighlighted(true)
+        isTrackingTouch = true
+    }
+    
+    public override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesEnded(touches, with: event)
         setHighlighted(false)
+        isTrackingTouch = false
+        
+        guard let touch = touches.first, extendedBounds.contains(touch.location(in: self)) else {
+            return
+        }
         pressHandler?()
     }
     
-    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+    public override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesCancelled(touches, with: event)
         setHighlighted(false)
+        isTrackingTouch = false
     }
     
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+    public override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesMoved(touches, with: event)
+        
+        guard let touch = touches.first else {
+            return
+        }
+        let contains = extendedBounds.contains(touch.location(in: self))
+        setHighlighted(contains)
         // Support dragging, maybe one day...
     }
 }
@@ -241,6 +267,7 @@ private extension BaulyView {
             s.spacing = 0
             return s
         }()
+        //labelStack.setContentCompressionResistancePriority(.required, for: .vertical)
         
         let contentStack: UIStackView = {
             let s = UIStackView(arrangedSubviews: [iconView, labelStack])
@@ -250,6 +277,7 @@ private extension BaulyView {
             s.spacing = 12
             return s
         }()
+        //contentStack.setContentCompressionResistancePriority(.required, for: .vertical)
         addSubview(contentStack)
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
