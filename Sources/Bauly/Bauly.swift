@@ -54,9 +54,6 @@ public final class Bauly {
     /// Currently running animator.
     private var runningAnimator: UIViewPropertyAnimator? {
         didSet {
-            oldValue?.addCompletion { position in
-                oldValue?.finishAnimation(at: .end)
-            }
             oldValue?.stopAnimation(false)
         }
     }
