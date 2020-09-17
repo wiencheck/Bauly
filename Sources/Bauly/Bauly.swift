@@ -54,7 +54,7 @@ public final class Bauly {
     /// Currently running animator.
     private var runningAnimator: UIViewPropertyAnimator? {
         didSet {
-            oldValue?.stopAnimation(false)
+            oldValue?.stopAnimation(true)
         }
     }
     
