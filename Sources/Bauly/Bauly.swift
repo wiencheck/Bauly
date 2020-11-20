@@ -101,7 +101,7 @@ public final class Bauly {
                     Uses app's default key window if `nil` is passed.
         - completionHandler: Action performed after banner disappears from the screen.
      */
-    public func present(configurationHandler: ((BaulyView) -> Void)?, duration: TimeInterval = 0.56, dismissAfter delay: TimeInterval = 5, in window: UIWindow? = nil, feedbackStyle: UIImpactFeedbackGenerator.FeedbackStyle? = nil, pressHandler: (() -> Void)? = nil, completionHandler: (() -> Void)? = nil) {
+    public func present(configurationHandler: (BaulyView) -> Void, duration: TimeInterval = 0.56, dismissAfter delay: TimeInterval = 5, in window: UIWindow? = nil, feedbackStyle: UIImpactFeedbackGenerator.FeedbackStyle? = nil, pressHandler: (() -> Void)? = nil, completionHandler: (() -> Void)? = nil) {
         
         let snapshot = Snapshot(configurationHandler: configurationHandler,
                                 duration: duration,
@@ -129,7 +129,7 @@ public final class Bauly {
                     Uses app's default key window if `nil` is passed.
         - completionHandler: Action performed after banner disappears from the screen.
      */
-    public func forcePresent(configurationHandler: ((BaulyView) -> Void)?, duration: TimeInterval = 0.56, dismissAfter delay: TimeInterval = 5, in window: UIWindow? = nil, feedbackStyle: UIImpactFeedbackGenerator.FeedbackStyle? = nil, pressHandler: (() -> Void)? = nil, completionHandler: (() -> Void)? = nil) {
+    public func forcePresent(configurationHandler: (BaulyView) -> Void, duration: TimeInterval = 0.56, dismissAfter delay: TimeInterval = 5, in window: UIWindow? = nil, feedbackStyle: UIImpactFeedbackGenerator.FeedbackStyle? = nil, pressHandler: (() -> Void)? = nil, completionHandler: (() -> Void)? = nil) {
         
         let snapshot = Snapshot(configurationHandler: configurationHandler,
                                 duration: duration,
@@ -189,6 +189,35 @@ public final class Bauly {
             view.subtitle = subtitle
             view.icon = icon
         }, duration: duration, dismissAfter: delay, in: window, feedbackStyle: feedbackStyle, pressHandler: pressHandler, completionHandler: completionHandler)
+    }
+    
+    /**
+     Updates the currently displayed banner with given properties. Does nothing if no banner is visible on-screen.
+     - Parameters:
+        - title: Main text of the banner.
+        - subtitle: Detail text of the banner.
+        - icon: Icon image for the banner. Should be a square image.
+     */
+    public func update(title: String, subtitle: String?, icon: UIImage?) {
+        
+        update(configurationHandler: { view in
+            view.title = title
+            view.subtitle = subtitle
+            view.icon = icon
+        })
+    }
+    
+    /**
+     Updates the currently displayed banner with given properties. Does nothing if no banner is visible on-screen.
+     - Parameters:
+        - configurationHandler: Configuration handler used to directly modify `BaulyView` properties, like `text` and `icon`
+     */
+    public func update(configurationHandler: (BaulyView) -> Void) {
+        guard let banner = currentBanner else {
+            return
+        }
+        configurationHandler(banner)
+        banner.window?.layoutIfNeeded()
     }
     
     /**
