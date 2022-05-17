@@ -101,7 +101,13 @@ public final class Bauly {
                     Uses app's default key window if `nil` is passed.
         - completionHandler: Action performed after banner disappears from the screen.
      */
-    public func present(configurationHandler: (BaulyView) -> Void, duration: TimeInterval = 0.56, dismissAfter delay: TimeInterval = 5, in window: UIWindow? = nil, feedbackStyle: UIImpactFeedbackGenerator.FeedbackStyle? = nil, pressHandler: (() -> Void)? = nil, completionHandler: (() -> Void)? = nil) {
+    public func present(configurationHandler: @escaping (BaulyView) -> Void,
+                        duration: TimeInterval = 0.56,
+                        dismissAfter delay: TimeInterval = 5,
+                        in window: UIWindow? = nil,
+                        feedbackStyle: UIImpactFeedbackGenerator.FeedbackStyle? = nil,
+                        pressHandler: (() -> Void)? = nil,
+                        completionHandler: (() -> Void)? = nil) {
         
         let snapshot = Snapshot(configurationHandler: configurationHandler,
                                 duration: duration,
@@ -129,7 +135,7 @@ public final class Bauly {
                     Uses app's default key window if `nil` is passed.
         - completionHandler: Action performed after banner disappears from the screen.
      */
-    public func forcePresent(configurationHandler: (BaulyView) -> Void, duration: TimeInterval = 0.56, dismissAfter delay: TimeInterval = 5, in window: UIWindow? = nil, feedbackStyle: UIImpactFeedbackGenerator.FeedbackStyle? = nil, pressHandler: (() -> Void)? = nil, completionHandler: (() -> Void)? = nil) {
+    public func forcePresent(configurationHandler: @escaping (BaulyView) -> Void, duration: TimeInterval = 0.56, dismissAfter delay: TimeInterval = 5, in window: UIWindow? = nil, feedbackStyle: UIImpactFeedbackGenerator.FeedbackStyle? = nil, pressHandler: (() -> Void)? = nil, completionHandler: (() -> Void)? = nil) {
         
         let snapshot = Snapshot(configurationHandler: configurationHandler,
                                 duration: duration,
