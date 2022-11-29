@@ -64,9 +64,9 @@ final public class BaulyView: UIControl {
     // MARK: Appearance
     
     /// Blur effect style used for banner's background.
-    public var visualEffect: UIBlurEffect.Style = .prominent {
+    public var backgroundBlurEffectStyle: UIBlurEffect.Style = .prominent {
         didSet {
-            visualEffectView.effect = UIBlurEffect(style: visualEffect)
+            visualEffectView.effect = UIBlurEffect(style: backgroundBlurEffectStyle)
         }
     }
     
@@ -105,7 +105,9 @@ final public class BaulyView: UIControl {
     }()
     
     /// View used for displaying blur effect.
-    private dynamic lazy var visualEffectView = UIVisualEffectView(effect: UIBlurEffect(style: visualEffect))
+    private lazy var visualEffectView = UIVisualEffectView(effect:
+                                                                    UIBlurEffect(style: backgroundBlurEffectStyle)
+    )
     
     private var highlightedAnimator: UIViewPropertyAnimator? {
         willSet { highlightedAnimator?.stopAnimation(true) }
@@ -133,6 +135,7 @@ final public class BaulyView: UIControl {
     public override func layoutSubviews() {
         super.layoutSubviews()
         layer.cornerRadius = bounds.height / 2
+        
         visualEffectView.layer.cornerRadius = layer.cornerRadius
         // Set shadow
         guard shadowLayer == nil else {
@@ -219,7 +222,6 @@ private extension BaulyView {
             let s = UIStackView(arrangedSubviews: [iconView, labelStack])
             s.axis = .horizontal
             s.alignment = .center
-            s.distribution = .fill
             s.spacing = 12
             return s
         }()

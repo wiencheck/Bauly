@@ -65,7 +65,7 @@ public class Bauly {
      
      If no banner is visible when calling this method, the `completionHandler` will not be called.
      */
-    public class func dismiss(completionHandler: (() -> Void)? = nil) {
+    public class func dismiss(completionHandler: (@MainActor () -> Void)? = nil) {
         presenter.dismiss(completionHandler: completionHandler)
     }
     

@@ -27,29 +27,20 @@ class ViewController: UIViewController {
         let configuration = BaulyView.Configuration(title: titleTextField.text,
                                                     subtitle: subtitleTextField.text,
                                                     image: .init(systemName: "heart.fill"))
+        var options = Bauly.PresentationOptions()
+        options.waitForDismissal = (sender !== forcePresentButton)
         
-        Task.detached(priority: .low, operation: {
-            await Bauly.present(withConfiguration: configuration,
-                                completion: { [weak self] state in
-                switch state {
-                case .willPresent(let banner):
-                    if #available(iOS 14.0, *) {
-                        banner.addAction(UIAction() { _ in
-                            print("Tapped!")
-                        }, for: .primaryActionTriggered)
-                    }
-                    self?.presentedBanner = banner
-                    
-                case .presented:
-                    sender.setTitle("Dismiss", for: .normal)
-                    self?.presentedBanner?.overrideUserInterfaceStyle = .dark
-                    self?.presentedBanner?.iconView.preferredSymbolConfiguration = .init(pointSize: 60)
-                    self?.presentedBanner?.layoutIfNeeded()
-                    
-                case .dismissed:
-                    sender.setTitle("Present", for: .normal)
-                }
-            })
+        Bauly.present(withConfiguration: configuration,
+                      presentationOptions: options,
+                      completion: { state in
+            switch state {
+            case .willPresent(let banner):
+                banner.tintColor = .purple
+                banner.iconView.preferredSymbolConfiguration = .init(pointSize: 26)
+                
+            default:
+                break
+            }
         })
     }
     

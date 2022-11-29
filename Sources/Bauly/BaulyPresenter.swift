@@ -88,7 +88,7 @@ final class BaulyPresenter {
         }
     }
     
-    func dismiss(completionHandler: (() -> Void)? = nil) {
+    func dismiss(completionHandler: (@MainActor () -> Void)? = nil) {
         dismissTask = nil
         presentAnimator?.stopAnimation(true)
         
@@ -126,8 +126,9 @@ private extension BaulyPresenter {
     }
     
     func present(withSnapshot snapshot: Snapshot) {
-        let banner = BaulyView()
+        let presentationOptions = snapshot.presentationOptions
         
+        let banner = BaulyView()
         banner.contentConfiguration = snapshot.viewConfiguration
         banner.tag = bannerViewTag
         banner.addTarget(self,
@@ -136,11 +137,12 @@ private extension BaulyPresenter {
         banner.addTarget(self,
                          action: #selector(handleBannerTouchCancelled),
                          for: [.touchUpOutside, .touchCancel])
-        banner.addTarget(self,
-                         action: #selector(handleBannerTapped),
-                         for: .primaryActionTriggered)
+        if presentationOptions.isDismissedByTap {
+            banner.addTarget(self,
+                             action: #selector(handleBannerTapped),
+                             for: .primaryActionTriggered)
+        }
         
-        let presentationOptions = snapshot.presentationOptions
         
         var window: UIWindow!
         if #available(iOS 13.0, *) {
@@ -163,7 +165,7 @@ private extension BaulyPresenter {
         NSLayoutConstraint.activate([
             initialConstraint,
             banner.leftAnchor
-                .constraint(greaterThanOrEqualTo: window.leftAnchor, constant: 16),
+                .constraint(greaterThanOrEqualTo: window.safeAreaLayoutGuide.leftAnchor, constant: 16),
             banner.centerXAnchor
                 .constraint(equalTo: window.centerXAnchor)
         ])
@@ -191,7 +193,7 @@ private extension BaulyPresenter {
             )
             snapshot.completionHandler?(.presented)
             
-            guard presentationOptions.delay > 0 else {
+            guard presentationOptions.dismissAfter > 0 else {
                 return
             }
             self?.scheduleBannerDismissal(after: presentationOptions.dismissAfter)
@@ -211,13 +213,15 @@ private extension BaulyPresenter {
         }
         
         applicationStateCancellable = applicationStateObserver.applicationStatePublisher
-            .debounce(for: .seconds(presentationOptions.delay), scheduler: DispatchQueue.main)
+            .debounce(for: .seconds(presentationOptions.animationDelay), scheduler: DispatchQueue.main)
             .sink { [weak self] isActive in
                 guard isActive else { return }
                 
                 snapshot.completionHandler?(.willPresent(banner))
+                if let feedbackStyle = presentationOptions.feedbackStyle {
+                    self?.generateHapticFeedback(withStyle: feedbackStyle)
+                }
                 self?.presentAnimator?.startAnimation()
-                self?.generateHapticFeedback(withStyle: presentationOptions.feedbackStyle)
             }
     }
     
