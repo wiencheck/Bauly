@@ -1,7 +1,7 @@
 //
 //  BaulyView.swift
 //
-//  Copyright (c) 2020 Adam Wienconek (https://github.com/wiencheck)
+//  Copyright (c) 2022 Adam Wienconek (https://github.com/wiencheck)
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
@@ -23,42 +23,42 @@
 //
 
 import UIKit
+import Combine
 
 /**
 Class representing a banner view. It exposes some properties for modyfing the appearance and content.
 */
-final public class BaulyView: UIView {
+final public class BaulyView: UIControl {
     
     // MARK: Public properties
     
-    /// Text diplayed in the main label of the banner.
-    public var title: String {
-        get {
-            return titleLabel.text ?? ""
-        } set {
-            titleLabel.text = newValue
-            titleLabel.isHidden = newValue.isEmpty
+    /// Current configuration of banner's content.
+    public var contentConfiguration: Configuration = .init() {
+        didSet {
+            applyConfiguration()
+            superview?.layoutIfNeeded()
         }
+    }
+    
+    /// Text diplayed in the main label of the banner.
+    @available(*, deprecated, message: "Use contentConfiguration property to set this value.")
+    public var title: String {
+        get { contentConfiguration.title ?? "" }
+        set { contentConfiguration.subtitle = newValue }
     }
     
     /// Text displayed in the detail label of the banner.
+    @available(*, deprecated, message: "Use contentConfiguration property to set this value.")
     public var subtitle: String? {
-        get {
-            return subtitleLabel.text
-        } set {
-            subtitleLabel.text = newValue
-            subtitleLabel.isHidden = newValue == nil
-        }
+        get { contentConfiguration.subtitle }
+        set { contentConfiguration.subtitle = newValue }
     }
     
     /// Image displayed in the banner. Should have equal width and height.
+    @available(*, deprecated, message: "Use contentConfiguration property to set this value.")
     public var icon: UIImage? {
-        get {
-            return iconView.image
-        } set {
-            iconView.image = newValue
-            iconView.isHidden = newValue == nil
-        }
+        get { contentConfiguration.image }
+        set { contentConfiguration.image = newValue }
     }
         
     // MARK: Appearance
@@ -70,79 +70,64 @@ final public class BaulyView: UIView {
         }
     }
     
-    // MARK: Private properties
-    
-    /// Unique identifier of the banner.
-    var identifier: String?
-    
-    /// Action called after pressing the banner.
-    var pressHandler: (() -> Void)?
-    
-    private(set)var isTrackingTouch = false
-    
-    private var isHighlighted = false
-    
     // MARK: Layout elements
     
     /* We hide elements initially so the stack is correctly sized depending on content. */
     
     /// Image view used for displaying icon.
-    private lazy var iconView: UIImageView = {
+    public private(set) lazy var iconView: UIImageView = {
         let im = UIImageView()
         im.contentMode = .scaleAspectFit
-        im.isHidden = true
+        im.preferredSymbolConfiguration = .init(pointSize: 20)
+        
         return im
     }()
     
     /// Main label of the banner.
-    private lazy var titleLabel: UILabel = {
+    public private(set) lazy var titleLabel: UILabel = {
         let l = UILabel()
         l.numberOfLines = 0
-        l.isHidden = true
         l.textAlignment = .center
-        if #available(iOS 11.0, *) {
-            l.font = .preferredFont(forTextStyle: .subheadline, weight: .semibold)
-        } else {
-            l.font = .preferredFont(forTextStyle: .subheadline)
-        }
+        l.font = .preferredFont(forTextStyle: .subheadline, weight: .semibold)
+        
         return l
     }()
     
     /// Secondary label of the banner.
-    private lazy var subtitleLabel: UILabel = {
+    public private(set) lazy var subtitleLabel: UILabel = {
         let l = UILabel()
         l.numberOfLines = 0
-        l.isHidden = true
         l.textAlignment = .center
-        if #available(iOS 11.0, *) {
-            l.font = .preferredFont(forTextStyle: .footnote, weight: .medium)
-        } else {
-            l.font = .preferredFont(forTextStyle: .footnote)
-        }
-        if #available(iOS 13.0, *) {
-            l.textColor = .secondaryLabel
-        } else {
-            l.textColor = .darkGray
-        }
+        l.font = .preferredFont(forTextStyle: .footnote, weight: .medium)
+        l.textColor = .secondaryLabel
+        
         return l
     }()
     
     /// View used for displaying blur effect.
     private dynamic lazy var visualEffectView = UIVisualEffectView(effect: UIBlurEffect(style: visualEffect))
     
+    private var highlightedAnimator: UIViewPropertyAnimator? {
+        willSet { highlightedAnimator?.stopAnimation(true) }
+        didSet { highlightedAnimator?.startAnimation() }
+    }
+    
     /// Special layer used for creating rounded shadow.
     private var shadowLayer: CAShapeLayer!
+    
+    public override var isHighlighted: Bool {
+        didSet { setHighlighted(isHighlighted) }
+    }
         
     // MARK: Initialization
     
-    public override init(frame: CGRect) {
+    override init(frame: CGRect) {
         super.init(frame: frame)
         commonInit()
     }
     
-    public required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        commonInit()
+    required init?(coder: NSCoder) {
+        fatalError("Na-uh")
     }
     
     public override func layoutSubviews() {
@@ -166,88 +151,50 @@ final public class BaulyView: UIView {
         layer.insertSublayer(shadowLayer, at: 0)
     }
     
-    // MARK: Private methods
-    
-    private func commonInit() {
-        visualEffectView.layer.masksToBounds = true
-        setupView()
-        subviews.forEach {
-            $0.isUserInteractionEnabled = false
-        }
-    }
-    
-    private func setHighlighted(_ highlighted: Bool) {
-        if highlighted == isHighlighted {
-            return
-        }
-        isHighlighted = highlighted
-        let alpha: CGFloat = highlighted ? 0.4 : 1
-        UIView.animate(withDuration: 0.16) {
-            self.titleLabel.alpha = alpha
-            self.subtitleLabel.alpha = alpha
-            self.iconView.alpha = alpha
-        }
-    }
-}
-
-// MARK: Handling Tint Color changes
-public extension BaulyView {
-    override var tintColor: UIColor! {
+    public override var tintColor: UIColor! {
         didSet {
             titleLabel.textColor = tintColor
         }
     }
     
-    override func tintColorDidChange() {
+    public override func tintColorDidChange() {
         super.tintColorDidChange()
         titleLabel.textColor = tintColor
     }
+    
 }
 
-// MARK: Touch
-extension BaulyView {
-    private var extendedBounds: CGRect {
-        return bounds
-        .applying(CGAffineTransform(translationX: -bounds.width * 0.4, y: -bounds.height * 0.4))
-        .applying(CGAffineTransform(scaleX: 1.2, y: 2.2))
-    }
-    
-    public override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        super.touchesBegan(touches, with: event)
-        setHighlighted(true)
-        isTrackingTouch = true
-    }
-    
-    public override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        super.touchesEnded(touches, with: event)
-        setHighlighted(false)
-        isTrackingTouch = false
-        
-        guard let touch = touches.first, extendedBounds.contains(touch.location(in: self)) else {
-            return
-        }
-        pressHandler?()
-    }
-    
-    public override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-        super.touchesCancelled(touches, with: event)
-        setHighlighted(false)
-        isTrackingTouch = false
-    }
-    
-    public override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        super.touchesMoved(touches, with: event)
-        
-        guard let touch = touches.first else {
-            return
-        }
-        let contains = extendedBounds.contains(touch.location(in: self))
-        setHighlighted(contains)
-        // Support dragging, maybe one day...
-    }
-}
-
+// MARK: Private
 private extension BaulyView {
+    
+    func commonInit() {
+        visualEffectView.layer.masksToBounds = true
+        setupView()
+        subviews.forEach { $0.isUserInteractionEnabled = false }
+        addTarget(self, action: #selector(handleTouchUpInside), for: .touchUpInside)
+    }
+    
+    func setHighlighted(_ highlighted: Bool) {
+        let alpha: CGFloat = highlighted ? 0.6 : 1
+        
+        highlightedAnimator = .init(duration: 0.16, curve: .linear) {
+            self.titleLabel.alpha = alpha
+            self.subtitleLabel.alpha = alpha
+            self.iconView.alpha = alpha
+        }
+    }
+    
+    func applyConfiguration() {
+        titleLabel.text = contentConfiguration.title
+        titleLabel.isHidden = (contentConfiguration.title == nil)
+        
+        subtitleLabel.text = contentConfiguration.subtitle
+        subtitleLabel.isHidden = (contentConfiguration.subtitle == nil)
+        
+        iconView.image = contentConfiguration.image
+        iconView.isHidden = (contentConfiguration.image == nil)
+    }
+    
     func setupView() {
         //Configure background
         backgroundColor = .clear
@@ -267,7 +214,6 @@ private extension BaulyView {
             s.spacing = 0
             return s
         }()
-        //labelStack.setContentCompressionResistancePriority(.required, for: .vertical)
         
         let contentStack: UIStackView = {
             let s = UIStackView(arrangedSubviews: [iconView, labelStack])
@@ -277,29 +223,31 @@ private extension BaulyView {
             s.spacing = 12
             return s
         }()
-        //contentStack.setContentCompressionResistancePriority(.required, for: .vertical)
+
         addSubview(contentStack)
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            // Constraints for stack
             contentStack.topAnchor.constraint(equalTo: topAnchor, constant: 6),
             contentStack.leftAnchor.constraint(equalTo: leftAnchor, constant: 20),
             contentStack.centerYAnchor.constraint(equalTo: centerYAnchor),
             contentStack.centerXAnchor.constraint(equalTo: centerXAnchor),
-            contentStack.widthAnchor.constraint(greaterThanOrEqualToConstant: 96),
-            // Constraints for subviews
-            iconView.heightAnchor.constraint(equalTo: iconView.widthAnchor),
-            iconView.heightAnchor.constraint(equalToConstant: 20)
+            contentStack.widthAnchor.constraint(greaterThanOrEqualToConstant: 96)
         ])
     }
+    
+    @objc func handleTouchUpInside(_ sender: BaulyView) {
+        sendActions(for: .primaryActionTriggered)
+    }
+    
 }
 
-fileprivate extension UIFont {
-    @available (iOS 11.0, *)
-    static func preferredFont(forTextStyle style: TextStyle, weight: Weight) -> UIFont {
-        let metrics = UIFontMetrics(forTextStyle: style)
-        let desc = UIFontDescriptor.preferredFontDescriptor(withTextStyle: style)
-        let font = UIFont.systemFont(ofSize: desc.pointSize, weight: weight)
-        return metrics.scaledFont(for: font)
+@available(iOS 14.0, *)
+extension BaulyView: UIContentView {
+    
+    @available(iOS, deprecated, message: "Prefer using the `contentConfiguration` property directly")
+    public var configuration: UIContentConfiguration {
+        get { contentConfiguration }
+        set { contentConfiguration = newValue as! Configuration }
     }
+    
 }

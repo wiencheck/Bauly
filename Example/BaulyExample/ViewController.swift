@@ -11,6 +11,12 @@ import Bauly
 
 class ViewController: UIViewController {
     
+    @IBOutlet weak var titleTextField: UITextField!
+    @IBOutlet weak var subtitleTextField: UITextField!
+    @IBOutlet weak var forcePresentButton: UIButton!
+    
+    weak var presentedBanner: BaulyView?
+    
     var newColor: UIColor? {
         didSet {
             view.backgroundColor = newColor
@@ -18,30 +24,34 @@ class ViewController: UIViewController {
     }
     
     @IBAction func buttonPressed(_ sender: UIButton) {
-        Bauly.shared.present(configurationHandler: { bauly in
-            bauly.tintColor = self.newColor
-            bauly.title = "This is Bauly!"
-            bauly.subtitle = """
-            Press me to have a little fun with colors.
-            Btw, I support mutli-line text and emojis easily
-            😏
-            """
-            if #available(iOS 13.0, *) {
-                bauly.icon = UIImage(systemName: "heart.fill")
-            }
-        }, dismissAfter: 1.5, in: view.window, feedbackStyle: .medium, pressHandler: {
-//            self.newColor = ([
-//                .red, .yellow, .blue, .green, .purple, .orange
-//            ] as [UIColor]).randomElement()
-            if #available(iOS 13.0, *) {
-                self.view.window?.overrideUserInterfaceStyle = .dark
-            } else {
-                // Fallback on earlier versions
-            }
-        }, completionHandler: {
-            sender.setTitle("Present again", for: .normal)
+        let configuration = BaulyView.Configuration(title: titleTextField.text,
+                                                    subtitle: subtitleTextField.text,
+                                                    image: .init(systemName: "heart.fill"))
+        
+        Task.detached(priority: .low, operation: {
+            await Bauly.present(withConfiguration: configuration,
+                                completion: { [weak self] state in
+                switch state {
+                case .willPresent(let banner):
+                    if #available(iOS 14.0, *) {
+                        banner.addAction(UIAction() { _ in
+                            print("Tapped!")
+                        }, for: .primaryActionTriggered)
+                    }
+                    self?.presentedBanner = banner
+                    
+                case .presented:
+                    sender.setTitle("Dismiss", for: .normal)
+                    self?.presentedBanner?.overrideUserInterfaceStyle = .dark
+                    self?.presentedBanner?.iconView.preferredSymbolConfiguration = .init(pointSize: 60)
+                    self?.presentedBanner?.layoutIfNeeded()
+                    
+                case .dismissed:
+                    sender.setTitle("Present", for: .normal)
+                }
+            })
         })
     }
-
+    
 }
 
