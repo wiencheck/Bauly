@@ -105,11 +105,11 @@ All properties have default values so you can choose which one you'd like to mod
 By default every time `present` is called a new banner is placed at the end of the queue and will be presented after all previous banners have been displayed. 
 
 This behaviour can be changed so that new banner will be placed at next position in the queue and will be presented immediately causing any other banner on the screen to slide out of the screen early.
-To do that set `presentImmediately` property to `false` on the `PresentationOptions` which you pass to the present method
+To do that set `presentImmediately` property to `true` on the `PresentationOptions` which you pass to the present method
 
 ```swift
     var options = Bauly.PresentationOptions()
-    options.presentImmediately = false
+    options.presentImmediately = true
 
     Bauly.present(withConfiguration: configuration,
                   presentationOptions: options,
