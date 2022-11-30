@@ -134,6 +134,34 @@ If you want to make sure that a banner was visible before calling this method yo
     }
 ```
 
+##### Responding to touches
+Since `BaulyView` is an `UIControl` action you can assign UIAction instance to it to respond to touch events.
+If you're targeting iOS versions pre-14.0 use the target-action pattern.
+
+```swift
+    Bauly.present(withConfiguration: configuration,
+                  completion: { state in
+        switch state {
+            case .willPresent(let banner):
+                if #available(iOS 14.0, *) {
+                    banner.addAction(UIAction() { [weak self] in
+                        self?.handleBannerTapped($0.sender as! BaulyView)
+                    }, for: .primaryActionTriggered)
+                }
+                else {
+                    banner.addTarget(self, action: #selector(ViewController.handleBannerTapped), for: .primaryActionTriggered)
+                }
+                
+            default:
+                break
+            }
+        })
+    
+    @objc func handleBannerTapped(_ sender: BaulyView) {
+        print("Banner tapped!")
+    }
+```
+
 ### Todos
  - Write Tests
  - Support dismissal by dragging the banner out of the screen

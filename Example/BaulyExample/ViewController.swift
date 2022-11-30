@@ -35,6 +35,15 @@ class ViewController: UIViewController {
                       completion: { state in
             switch state {
             case .willPresent(let banner):
+                if #available(iOS 14.0, *) {
+                    banner.addAction(UIAction() { [weak self] in
+                        self?.handleBannerTapped($0.sender as! BaulyView)
+                    }, for: .primaryActionTriggered)
+                }
+                else {
+                    banner.addTarget(self, action: #selector(ViewController.handleBannerTapped), for: .primaryActionTriggered)
+                }
+                
                 banner.tintColor = .purple
                 banner.iconView.preferredSymbolConfiguration = .init(pointSize: 26)
                 
@@ -42,6 +51,10 @@ class ViewController: UIViewController {
                 break
             }
         })
+    }
+    
+    @objc func handleBannerTapped(_ sender: BaulyView) {
+        print("Banner tapped!")
     }
     
 }
