@@ -11,6 +11,12 @@ import Bauly
 
 class ViewController: UIViewController {
     
+    @IBOutlet weak var titleTextField: UITextField!
+    @IBOutlet weak var subtitleTextField: UITextField!
+    @IBOutlet weak var forcePresentButton: UIButton!
+    
+    weak var presentedBanner: BaulyView?
+    
     var newColor: UIColor? {
         didSet {
             view.backgroundColor = newColor
@@ -18,30 +24,38 @@ class ViewController: UIViewController {
     }
     
     @IBAction func buttonPressed(_ sender: UIButton) {
-        Bauly.shared.present(configurationHandler: { bauly in
-            bauly.tintColor = self.newColor
-            bauly.title = "This is Bauly!"
-            bauly.subtitle = """
-            Press me to have a little fun with colors.
-            Btw, I support mutli-line text and emojis easily
-            😏
-            """
-            if #available(iOS 13.0, *) {
-                bauly.icon = UIImage(systemName: "heart.fill")
+        let configuration = BaulyView.Configuration(title: titleTextField.text,
+                                                    subtitle: subtitleTextField.text,
+                                                    image: .init(systemName: "heart.fill"))
+        var options = Bauly.PresentationOptions()
+        options.waitForDismissal = (sender !== forcePresentButton)
+        
+        Bauly.present(withConfiguration: configuration,
+                      presentationOptions: options,
+                      completion: { state in
+            switch state {
+            case .willPresent(let banner):
+                if #available(iOS 14.0, *) {
+                    banner.addAction(UIAction() { [weak self] in
+                        self?.handleBannerTapped($0.sender as! BaulyView)
+                    }, for: .primaryActionTriggered)
+                }
+                else {
+                    banner.addTarget(self, action: #selector(ViewController.handleBannerTapped), for: .primaryActionTriggered)
+                }
+                
+                banner.tintColor = .purple
+                banner.iconView.preferredSymbolConfiguration = .init(pointSize: 26)
+                
+            default:
+                break
             }
-        }, dismissAfter: 1.5, in: view.window, feedbackStyle: .medium, pressHandler: {
-//            self.newColor = ([
-//                .red, .yellow, .blue, .green, .purple, .orange
-//            ] as [UIColor]).randomElement()
-            if #available(iOS 13.0, *) {
-                self.view.window?.overrideUserInterfaceStyle = .dark
-            } else {
-                // Fallback on earlier versions
-            }
-        }, completionHandler: {
-            sender.setTitle("Present again", for: .normal)
         })
     }
-
+    
+    @objc func handleBannerTapped(_ sender: BaulyView) {
+        print("Banner tapped!")
+    }
+    
 }
 
