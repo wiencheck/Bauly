@@ -122,12 +122,11 @@ To manually dismiss the banner, use the `dismiss(completionHandler:)` method.
 
 It takes optional closure which gets called once current banner disappears from the screen. If no banner was displayed at the moment of calling this method the `completionHandler` will not be called.
 
-If you want to make sure that a banner was visible before calling this method you can use the `currentBanner(in windowScene:` method and check its return value.
+If you want to make sure that a banner was visible before calling this method you can use the `currentBanner(in windowScene:)` method and check its return value.
 
 ```swift
-    guard let scene = view.window?.windowScene,
-          Bauly.currentBanner(in: scene) != nil else {
-            return
+    guard Bauly.currentBanner() != nil else {
+        return
     }
     Bauly.dismiss {
         // Continue after dismissing the banner

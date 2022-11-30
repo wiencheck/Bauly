@@ -34,13 +34,17 @@ public class Bauly {
     private static let presenter = BaulyPresenter()
     
     /**
-     Currently displayed banner view.
+     Returns currently displayed banner view in window scene.
      
      - Parameters:
-        - windowScene: Window scene object in which banner was presented.
+        - windowScene: Window scene object in which banner was presented. If `nil` is passed a first active scene is used.
      */
-    public class func currentBanner(in windowScene: UIWindowScene) -> BaulyView? {
-        return presenter.currentBanner(in: windowScene)
+    public class func currentBanner(in windowScene: UIWindowScene? = nil) -> BaulyView? {
+        guard let scene = windowScene ?? .focused else {
+            assertionFailure("Could not obtain window scene!")
+            return nil
+        }
+        return presenter.currentBanner(in: scene)
     }
     
     /**
