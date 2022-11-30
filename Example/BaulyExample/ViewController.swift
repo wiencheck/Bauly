@@ -28,7 +28,7 @@ class ViewController: UIViewController {
                                                     subtitle: subtitleTextField.text,
                                                     image: .init(systemName: "heart.fill"))
         var options = Bauly.PresentationOptions()
-        options.waitForDismissal = (sender !== forcePresentButton)
+        options.presentImmediately = (sender === forcePresentButton)
         
         Bauly.present(withConfiguration: configuration,
                       presentationOptions: options,

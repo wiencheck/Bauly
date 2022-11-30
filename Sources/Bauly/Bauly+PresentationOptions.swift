@@ -29,11 +29,11 @@ public extension Bauly {
         /// Indicates whether banner will wait for its turn in the queue
         /// or will be displayed immediately.
         ///
-        /// If set to `false` banner will be displayed immediately before
+        /// If set to `true` banner will be displayed immediately before
         /// other banners from the queue are presented.
         ///
-        /// `true` by default.
-        public var waitForDismissal: Bool
+        /// `false` by default.
+        public var presentImmediately: Bool
         
         /// Window scene used for displaying the banner.
         ///
@@ -54,7 +54,7 @@ public extension Bauly {
                     animationDuration: TimeInterval = 0.58,
                     dismissAfter: TimeInterval = 3.8,
                     animationDelay: TimeInterval = 0.05,
-                    waitForDismissal: Bool = true,
+                    presentImmediately: Bool = false,
                     windowScene: UIWindowScene? = nil,
                     feedbackStyle: UIImpactFeedbackGenerator.FeedbackStyle? = .medium,
                     isDismissedByTap: Bool = true) {
@@ -62,7 +62,7 @@ public extension Bauly {
             self.animationDuration = animationDuration
             self.dismissAfter = dismissAfter
             self.animationDelay = animationDelay
-            self.waitForDismissal = waitForDismissal
+            self.presentImmediately = presentImmediately
             self.windowScene = windowScene
             self.feedbackStyle = feedbackStyle
             self.isDismissedByTap = isDismissedByTap

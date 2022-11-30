@@ -82,7 +82,7 @@ public extension Bauly {
         public var animationDuration: TimeInterval
         public var dismissAfter: TimeInterval
         public var animationDelay: TimeInterval
-        public var waitForDismissal: Bool
+        public var presentImmediately: Bool
         public var windowScene: UIWindowScene?
         public var feedbackStyle: UIImpactFeedbackGenerator.FeedbackStyle?
         public var isDismissedByTap: Bool
@@ -96,7 +96,7 @@ All properties have default values so you can choose which one you'd like to mod
 - `animationDuration`: Duration of the presentation / dismissal animation (in seconds).
 - `dismissAfter`: Time after banner disappears from the screen (in seconds).
 - `animationDelay`: Delay for the animation to start.
-- `waitForDismissal`: Controls whether banner will wait for its turn in the queue or will be displayed immediately.
+- `presentImmediately`: Controls whether banner will wait for its turn in the queue or will be displayed immediately.
 - `windowScene`: Window scene used for displaying the banner.
 - `feedbackStyle`: Style of haptic feedback which occurs when banner is presented.
 - `isDismissedByTap`: Indicates whether tapping on the banner should dismiss it.
@@ -105,11 +105,11 @@ All properties have default values so you can choose which one you'd like to mod
 By default every time `present` is called a new banner is placed at the end of the queue and will be presented after all previous banners have been displayed. 
 
 This behaviour can be changed so that new banner will be placed at next position in the queue and will be presented immediately causing any other banner on the screen to slide out of the screen early.
-To do that set `waitForDismissal` property to `false` on the `PresentationOptions` which you pass to the present method
+To do that set `presentImmediately` property to `false` on the `PresentationOptions` which you pass to the present method
 
 ```swift
     var options = Bauly.PresentationOptions()
-    options.waitForDismissal = false
+    options.presentImmediately = false
 
     Bauly.present(withConfiguration: configuration,
                   presentationOptions: options,

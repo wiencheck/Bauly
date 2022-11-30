@@ -73,18 +73,16 @@ final class BaulyPresenter {
         let snapshot = Snapshot(viewConfiguration: configuration,
                                 presentationOptions: presentationOptions,
                                 completionHandler: completion)
-        
-        guard !queue.isEmpty else {
+        if queue.isEmpty {
             queue.append(snapshot)
             presentNextBanner()
-            return
         }
-        if presentationOptions.waitForDismissal {
-            queue.append(snapshot)
-        }
-        else {
+        else if presentationOptions.presentImmediately {
             queue.insert(snapshot, at: 1)
             dismiss()
+        }
+        else {
+            queue.append(snapshot)
         }
     }
     
