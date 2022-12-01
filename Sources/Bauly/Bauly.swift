@@ -40,8 +40,7 @@ public class Bauly {
         - windowScene: Window scene object in which banner was presented. If `nil` is passed a first active scene is used.
      */
     public class func currentBanner(in windowScene: UIWindowScene? = nil) -> BaulyView? {
-        guard let scene = windowScene ?? .focused else {
-            assertionFailure("Could not obtain window scene!")
+        guard let scene = windowScene ?? presenter.applicationWindowScene() else {
             return nil
         }
         return presenter.currentBanner(in: scene)

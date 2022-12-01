@@ -201,14 +201,8 @@ private extension BaulyView {
     func setupView() {
         //Configure background
         backgroundColor = .clear
-        addSubview(visualEffectView)
         visualEffectView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            visualEffectView.topAnchor.constraint(equalTo: topAnchor),
-            visualEffectView.leftAnchor.constraint(equalTo: leftAnchor),
-            visualEffectView.bottomAnchor.constraint(equalTo: bottomAnchor),
-            visualEffectView.rightAnchor.constraint(equalTo: rightAnchor)
-        ])
+        addSubview(visualEffectView)
         
         // Configure labels
         let labelStack: UIStackView = {
@@ -229,11 +223,16 @@ private extension BaulyView {
         addSubview(contentStack)
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
+            visualEffectView.topAnchor.constraint(equalTo: topAnchor),
+            visualEffectView.leftAnchor.constraint(equalTo: leftAnchor),
+            visualEffectView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            visualEffectView.rightAnchor.constraint(equalTo: rightAnchor),
+            
             contentStack.topAnchor.constraint(equalTo: topAnchor, constant: 6),
             contentStack.leftAnchor.constraint(equalTo: leftAnchor, constant: 20),
             contentStack.centerYAnchor.constraint(equalTo: centerYAnchor),
             contentStack.centerXAnchor.constraint(equalTo: centerXAnchor),
-            contentStack.widthAnchor.constraint(greaterThanOrEqualToConstant: 96)
+            contentStack.widthAnchor.constraint(greaterThanOrEqualToConstant: 96),
         ])
     }
     

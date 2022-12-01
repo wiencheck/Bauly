@@ -25,13 +25,9 @@
 import UIKit
 import Combine
 
-fileprivate let bannerViewTag = 9_143_625
-
 @MainActor
 final class BaulyPresenter {
-    
-    /// MARK: Public properties
-    
+        
     // MARK: Private properties
     
     /// Constraint keeping banner in its initial position (outside of the screen)
@@ -56,15 +52,10 @@ final class BaulyPresenter {
     private var queue: [Snapshot] = []
         
     func currentBanner(in windowScene: UIWindowScene) -> BaulyView? {
-        let window: UIWindow?
-        if #available(iOS 15.0, *) {
-            window = windowScene.keyWindow
-        }
-        else {
-            window = windowScene.windows.first(where: \.isKeyWindow)
-        }
-        
-        return window?.viewWithTag(bannerViewTag) as? BaulyView
+        let window = windowScene.keyWindow
+        return window?.subviews.first(where: {
+            $0 is BaulyView
+        }) as? BaulyView
     }
     
     func present(withConfiguration configuration: BaulyView.Configuration,
@@ -91,12 +82,19 @@ final class BaulyPresenter {
         presentAnimator?.stopAnimation(true)
         
         dismissAnimator?.addCompletion {
-            assert(
-                $0 == .end, "Animator finished in incorrect state!"
-            )
+            guard $0 == .end else { return }
             completionHandler?()
         }
         dismissAnimator?.startAnimation()
+    }
+    
+    func applicationWindowScene() -> UIWindowScene? {
+        let scenes = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+        
+        return scenes.first(where: {
+            $0.activationState == .foregroundActive
+        }) ?? scenes.first
     }
     
 }
@@ -114,12 +112,6 @@ private extension BaulyPresenter {
         guard let snapshot = queue.first else {
             return
         }
-        if let windowScene = snapshot.presentationOptions.windowScene ?? .focused {
-            assert(
-                currentBanner(in: windowScene) == nil,
-                "Previous banner was not dismissed!"
-            )
-        }
         present(withSnapshot: snapshot)
     }
     
@@ -128,7 +120,6 @@ private extension BaulyPresenter {
         
         let banner = BaulyView()
         banner.contentConfiguration = snapshot.viewConfiguration
-        banner.tag = bannerViewTag
         banner.addTarget(self,
                          action: #selector(handleBannerTouched),
                          for: .touchDown)
@@ -141,18 +132,18 @@ private extension BaulyPresenter {
                              for: .primaryActionTriggered)
         }
         
-        
-        var window: UIWindow!
+        var window: UIWindow?
         if #available(iOS 13.0, *) {
-            window = (snapshot.presentationOptions.windowScene ?? .focused)?.keyWindow
+            let windowScene = snapshot.presentationOptions.windowScene ?? applicationWindowScene()
+            window = windowScene?.keyWindow
         }
         else {
             window = UIApplication.shared.keyWindow
         }
-        assert(
-            window != nil,
-            "Could not obtain window to display banner"
-        )
+        guard let window else {
+            print("Could not obtain window to display banner")
+            return
+        }
         
         window.addSubview(banner)
         banner.translatesAutoresizingMaskIntoConstraints = false
@@ -186,9 +177,7 @@ private extension BaulyPresenter {
             window.layoutIfNeeded()
         }
         presentAnimator!.addCompletion { [weak self] in
-            assert(
-                $0 == .end, "Animator finished in incorrect state!"
-            )
+            guard $0 == .end else { return }
             snapshot.completionHandler?(.presented)
             
             guard presentationOptions.dismissAfter > 0 else {
@@ -202,9 +191,7 @@ private extension BaulyPresenter {
             window.layoutIfNeeded()
         }
         dismissAnimator!.addCompletion { [weak self] in
-            assert(
-                $0 == .end, "Animator finished in incorrect state!"
-            )
+            guard $0 == .end else { return }
             snapshot.completionHandler?(.dismissed)
             self?.clean(after: banner)
             self?.presentNextBanner()
