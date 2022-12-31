@@ -39,13 +39,17 @@ final class BaulyPresenter {
     private var dismissTask: Task<Void, Never>? {
         willSet { dismissTask?.cancel() }
     }
-    private var presentAnimator: UIViewPropertyAnimator?
-    private var dismissAnimator: UIViewPropertyAnimator?
+    private var presentAnimator: UIViewPropertyAnimator? {
+        willSet { presentAnimator?.stopAnimation(true) }
+    }
+    private var dismissAnimator: UIViewPropertyAnimator? {
+        willSet { dismissAnimator?.stopAnimation(true) }
+    }
     
     private var recentFeedbackStyle: UIImpactFeedbackGenerator.FeedbackStyle?
     private var cachedFeedbackGenerator: UIImpactFeedbackGenerator?
     
-    private var applicationStateCancellable: AnyCancellable?
+    private var cancellables: Set<AnyCancellable> = []
     private lazy var applicationStateObserver = ApplicationStateObserver()
     
     /// Queue of upcoming banners.
@@ -79,7 +83,7 @@ final class BaulyPresenter {
     
     func dismiss(completionHandler: (@MainActor () -> Void)? = nil) {
         dismissTask = nil
-        presentAnimator?.stopAnimation(true)
+        presentAnimator = nil
         
         dismissAnimator?.addCompletion {
             guard $0 == .end else { return }
@@ -120,17 +124,6 @@ private extension BaulyPresenter {
         
         let banner = BaulyView()
         banner.contentConfiguration = snapshot.viewConfiguration
-        banner.addTarget(self,
-                         action: #selector(handleBannerTouched),
-                         for: .touchDown)
-        banner.addTarget(self,
-                         action: #selector(handleBannerTouchCancelled),
-                         for: [.touchUpOutside, .touchCancel])
-        if presentationOptions.isDismissedByTap {
-            banner.addTarget(self,
-                             action: #selector(handleBannerTapped),
-                             for: .primaryActionTriggered)
-        }
         
         var window: UIWindow?
         if #available(iOS 13.0, *) {
@@ -148,18 +141,16 @@ private extension BaulyPresenter {
         window.addSubview(banner)
         banner.translatesAutoresizingMaskIntoConstraints = false
         
-        initialConstraint = banner.bottomAnchor
-            .constraint(equalTo: window.topAnchor)
-            .withPriority(.defaultLow)
-        NSLayoutConstraint.activate([
-            initialConstraint,
+        let initialConstraints: [NSLayoutConstraint] = [
+            banner.bottomAnchor
+                .constraint(equalTo: window.topAnchor)
+                .withPriority(.defaultLow),
             banner.leftAnchor
                 .constraint(greaterThanOrEqualTo: window.safeAreaLayoutGuide.leftAnchor, constant: 16),
             banner.centerXAnchor
                 .constraint(equalTo: window.centerXAnchor)
-        ])
-        
-        // Call layout to properly adjust view position and size.
+        ]
+        NSLayoutConstraint.activate(initialConstraints)
         window.layoutIfNeeded()
         
         let layoutGuide: UILayoutGuide
@@ -178,6 +169,7 @@ private extension BaulyPresenter {
         }
         presentAnimator!.addCompletion { [weak self] in
             guard $0 == .end else { return }
+            banner.wasPresented = true
             snapshot.completionHandler?(.presented)
             
             guard presentationOptions.dismissAfter > 0 else {
@@ -197,22 +189,66 @@ private extension BaulyPresenter {
             self?.presentNextBanner()
         }
         
-        applicationStateCancellable = applicationStateObserver.applicationStatePublisher
-            .debounce(for: .seconds(presentationOptions.animationDelay), scheduler: DispatchQueue.main)
-            .sink { [weak self] isActive in
-                guard isActive else { return }
+        assert(
+            cancellables.isEmpty,
+            "Observers for previous banner were not removed"
+        )
+        
+        banner.tapGesturePublisher
+            .sink { [weak self] gesture in
+                let location = gesture.location(in: banner)
+                let isTouched = banner.bounds
+                    .insetBy(dx: -25, dy: -25)
+                    .contains(location)
                 
+                switch gesture.state {
+                case .began, .changed:
+                    self?.dismissTask = nil
+                    banner.isHighlighted = isTouched
+                                        
+                case .ended:
+                    if isTouched {
+                        self?.scheduleBannerDismissal()
+                    }
+                    else {
+                        self?.dismiss()
+                    }
+                    
+                case .cancelled:
+                    self?.scheduleBannerDismissal()
+                    
+                default:
+                    break
+                }
+            }
+            .store(in: &cancellables)
+        
+        NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)
+            .sink { [weak self, weak banner] _ in
+                guard let banner else { return }
+                NSLayoutConstraint.activate(initialConstraints)
+                self?.finalConstraint.isActive = banner.wasPresented
+                window.layoutIfNeeded()
+            }
+            .store(in: &cancellables)
+        
+        applicationStateObserver.applicationStatePublisher
+            .debounce(for: .seconds(presentationOptions.animationDelay), scheduler: DispatchQueue.main)
+            .filter { $0 && !banner.wasPresented }
+            .sink { [weak self] _ in
                 snapshot.completionHandler?(.willPresent(banner))
                 if let feedbackStyle = presentationOptions.feedbackStyle {
                     self?.generateHapticFeedback(withStyle: feedbackStyle)
                 }
                 self?.presentAnimator?.startAnimation()
             }
+            .store(in: &cancellables)
     }
     
     func clean(after view: BaulyView) {
         view.removeFromSuperview()
         queue.removeFirst()
+        cancellables.removeAll()
     }
     
     /**
@@ -233,7 +269,7 @@ private extension BaulyPresenter {
         recentFeedbackStyle = feedbackStyle
     }
     
-    func scheduleBannerDismissal(after delay: TimeInterval) {
+    func scheduleBannerDismissal(after delay: TimeInterval = 1.5) {
         dismissTask = Task { [weak dismissAnimator] in
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
             guard !Task.isCancelled else {
@@ -247,16 +283,8 @@ private extension BaulyPresenter {
         }
     }
     
-    @objc func handleBannerTouched(_ sender: BaulyView) {
-        dismissTask = nil
-    }
-    
-    @objc func handleBannerTouchCancelled(_ sender: BaulyView) {
-        scheduleBannerDismissal(after: 1.5)
-    }
-    
-    @objc func handleBannerTapped(_ sender: BaulyView) {
-        dismiss()
+    func updateConstraints() {
+        
     }
     
 }

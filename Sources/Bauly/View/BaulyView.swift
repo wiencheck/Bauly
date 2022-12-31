@@ -28,7 +28,7 @@ import Combine
 /**
 Class representing a banner view. It exposes some properties for modyfing the appearance and content.
 */
-final public class BaulyView: UIControl {
+final public class BaulyView: UIView {
     
     // MARK: Public properties
     
@@ -104,6 +104,8 @@ final public class BaulyView: UIControl {
         return l
     }()
     
+    var wasPresented = false
+    
     /// View used for displaying blur effect.
     private lazy var visualEffectView = UIVisualEffectView(effect:
                                                                     UIBlurEffect(style: backgroundBlurEffectStyle)
@@ -116,9 +118,25 @@ final public class BaulyView: UIControl {
     
     /// Special layer used for creating rounded shadow.
     private var shadowLayer: CAShapeLayer!
+    private var tapCancellables: Set<AnyCancellable> = []
     
-    public override var isHighlighted: Bool {
-        didSet { setHighlighted(isHighlighted) }
+    private(set) lazy var tapGesturePublisher: AnyPublisher<UIGestureRecognizer, Never> = {
+        let tap = UILongPressGestureRecognizer()
+        tap.minimumPressDuration = 0
+        self.addGestureRecognizer(tap)
+        
+        return tap.publisher()
+            .map { $0 as UIGestureRecognizer }
+            .eraseToAnyPublisher()
+    }()
+    
+    public var isHighlighted: Bool = false {
+        didSet {
+            guard isHighlighted != oldValue else {
+                return
+            }
+            setHighlighted(isHighlighted)
+        }
     }
         
     // MARK: Initialization
@@ -165,6 +183,26 @@ final public class BaulyView: UIControl {
         titleLabel.textColor = tintColor
     }
     
+    /**
+     Registers closure to be called after banner is pressed by the user.
+     */
+    public func addTapHandler(_ action: @escaping () -> Void) {
+        tapGesturePublisher
+            .filter { $0.state == .ended }
+            .sink { _ in action() }
+            .store(in: &tapCancellables)
+    }
+    
+    /**
+     Registers asynchronous closure to be called after banner is pressed by the user.
+     */
+    public func addTapHandler(priortity: TaskPriority? = nil,
+                              _ action: @escaping () async -> Void) {
+        addTapHandler {
+            Task(priority: priortity) { await action() }
+        }
+    }
+    
 }
 
 // MARK: Private
@@ -174,7 +212,6 @@ private extension BaulyView {
         visualEffectView.layer.masksToBounds = true
         setupView()
         subviews.forEach { $0.isUserInteractionEnabled = false }
-        addTarget(self, action: #selector(handleTouchUpInside), for: .touchUpInside)
     }
     
     func setHighlighted(_ highlighted: Bool) {
@@ -234,10 +271,6 @@ private extension BaulyView {
             contentStack.centerXAnchor.constraint(equalTo: centerXAnchor),
             contentStack.widthAnchor.constraint(greaterThanOrEqualToConstant: 96),
         ])
-    }
-    
-    @objc func handleTouchUpInside(_ sender: BaulyView) {
-        sendActions(for: .primaryActionTriggered)
     }
     
 }
