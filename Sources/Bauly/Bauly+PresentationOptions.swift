@@ -32,7 +32,7 @@ public extension Bauly {
         /// If set to `true` banner will be displayed immediately before
         /// other banners from the queue are presented.
         ///
-        /// `false` by default.
+        /// Defaults to `false`.
         public var presentImmediately: Bool
         
         /// Window scene used for displaying the banner.
@@ -43,12 +43,21 @@ public extension Bauly {
         /// Style of haptic feedback which occurs when banner is presented.
         ///
         /// If set to `nil` no haptic feedback will be generated when presenting the banner.
+        ///
+        /// Defaults to `.medium`
         public var feedbackStyle: UIImpactFeedbackGenerator.FeedbackStyle?
         
         /// Indicates whether tapping on the banner should dismiss it.
         ///
         /// Defaults to `true`
         public var isDismissedByTap: Bool
+        
+        /// Indicates whether banner can be dragged.
+        ///
+        /// If set to `true` banner can be dismissed by dragging it out of the screen
+        ///
+        /// Defaults to `true`
+        public var supportsDragging: Bool
         
         public init(topPadding: CGFloat = 2,
                     animationDuration: TimeInterval = 0.58,
@@ -57,7 +66,8 @@ public extension Bauly {
                     presentImmediately: Bool = false,
                     windowScene: UIWindowScene? = nil,
                     feedbackStyle: UIImpactFeedbackGenerator.FeedbackStyle? = .medium,
-                    isDismissedByTap: Bool = true) {
+                    isDismissedByTap: Bool = true,
+                    supportsDragging: Bool = true) {
             self.topPadding = topPadding
             self.animationDuration = animationDuration
             self.dismissAfter = dismissAfter
@@ -66,6 +76,7 @@ public extension Bauly {
             self.windowScene = windowScene
             self.feedbackStyle = feedbackStyle
             self.isDismissedByTap = isDismissedByTap
+            self.supportsDragging = supportsDragging
         }
     }
     

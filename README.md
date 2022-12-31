@@ -1,6 +1,6 @@
 # Bauly
 
-![Bauly Demo](https://i.imgur.com/Gpc7Tol.gif)
+![Bauly Demo](https://i.imgur.com/qcalhgg.gif)
 
 **Bauly** is a neat little library used to display compact message banners in your app. The design is inspired by stock banners visible in iOS 13 and newer. 
 
@@ -118,9 +118,9 @@ To do that set `presentImmediately` property to `true` on the `PresentationOptio
 ```
 
 ##### Dismissing banner
-To manually dismiss the banner, use the `dismiss(completionHandler:)` method.
+To manually dismiss the banner, use the `dismiss(completion:)` method.
 
-It takes optional closure which gets called once current banner disappears from the screen. If no banner was displayed at the moment of calling this method the `completionHandler` will not be called.
+It takes optional closure which gets called once current banner disappears from the screen. If no banner was displayed at the moment of calling this method the `completion` will not be called.
 
 If you want to make sure that a banner was visible before calling this method you can use the `currentBanner(in windowScene:)` method and check its return value.
 
@@ -134,36 +134,20 @@ If you want to make sure that a banner was visible before calling this method yo
 ```
 
 ##### Responding to touches
-Since `BaulyView` is an `UIControl` action you can assign UIAction instance to it to respond to touch events.
-If you're targeting iOS versions pre-14.0 use the target-action pattern.
+Method `present` accepts optional closure which gets called when user taps on the presented banner:
 
 ```swift
     Bauly.present(withConfiguration: configuration,
-                  completion: { state in
-        switch state {
-            case .willPresent(let banner):
-                if #available(iOS 14.0, *) {
-                    banner.addAction(UIAction() { [weak self] in
-                        self?.handleBannerTapped($0.sender as! BaulyView)
-                    }, for: .primaryActionTriggered)
-                }
-                else {
-                    banner.addTarget(self, action: #selector(ViewController.handleBannerTapped), for: .primaryActionTriggered)
-                }
-                
-            default:
-                break
-            }
-        })
-    
-    @objc func handleBannerTapped(_ sender: BaulyView) {
-        print("Banner tapped!")
-    }
+                  presentationOptions: options,
+                  onTap: { banner in
+            print("Banner was tapped!")
+        },
+        ...
 ```
 
 ### Todos
  - Write Tests
- - Support dismissal by dragging the banner out of the screen
+ - <s>Support dismissal by dragging the banner out of the screen</s> Done in 1.1.0
 
 License
 ----

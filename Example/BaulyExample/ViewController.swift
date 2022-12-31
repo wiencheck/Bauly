@@ -13,38 +13,49 @@ class ViewController: UIViewController {
     
     @IBOutlet weak var titleTextField: UITextField!
     @IBOutlet weak var subtitleTextField: UITextField!
+    @IBOutlet weak var symbolNameField: UITextField!
     @IBOutlet weak var forcePresentButton: UIButton!
-    
-    weak var presentedBanner: BaulyView?
-    
+        
     var newColor: UIColor? {
         didSet {
             view.backgroundColor = newColor
         }
     }
     
+    override var preferredStatusBarUpdateAnimation: UIStatusBarAnimation {
+        .fade
+    }
+    
+    override var prefersStatusBarHidden: Bool {
+        Bauly.currentBanner(in: view.window?.windowScene) != nil
+    }
+    
     @IBAction func buttonPressed(_ sender: UIButton) {
-        let configuration = BaulyView.Configuration(title: titleTextField.text,
-                                                    subtitle: subtitleTextField.text,
-                                                    image: .init(systemName: "heart.fill"))
+        var configuration = BaulyView.Configuration()
+        
+        configuration.title = (titleTextField.text?.nilIfEmpty ?? titleTextField.placeholder?.nilIfEmpty)
+        configuration.subtitle = (subtitleTextField.text?.nilIfEmpty ?? subtitleTextField.placeholder?.nilIfEmpty)
+        if let symbolName = (symbolNameField.text?.nilIfEmpty ?? symbolNameField.placeholder?.nilIfEmpty) {
+            configuration.image = .init(systemName: symbolName)
+        }
+        
         var options = Bauly.PresentationOptions()
         options.presentImmediately = (sender === forcePresentButton)
         
         Bauly.present(withConfiguration: configuration,
                       presentationOptions: options,
-                      completion: { state in
+                      onTap: { banner in
+            print("Banner was tapped!")
+        },
+                      completion: { [weak self] state in
+            
+            UIView.animate(withDuration: options.animationDuration / 3) {
+                self?.setNeedsStatusBarAppearanceUpdate()
+            }
+            
             switch state {
             case .willPresent(let banner):
-                if #available(iOS 14.0, *) {
-                    banner.addAction(UIAction() { [weak self] in
-                        self?.handleBannerTapped($0.sender as! BaulyView)
-                    }, for: .primaryActionTriggered)
-                }
-                else {
-                    banner.addTarget(self, action: #selector(ViewController.handleBannerTapped), for: .primaryActionTriggered)
-                }
-                
-                banner.tintColor = .purple
+                // banner.tintColor = .purple
                 banner.iconView.preferredSymbolConfiguration = .init(pointSize: 26)
                 
             default:
@@ -53,9 +64,12 @@ class ViewController: UIViewController {
         })
     }
     
-    @objc func handleBannerTapped(_ sender: BaulyView) {
-        print("Banner tapped!")
+}
+
+extension String {
+    
+    var nilIfEmpty: String? {
+        isEmpty ? nil : self
     }
     
 }
-

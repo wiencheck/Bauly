@@ -29,7 +29,7 @@ import Combine
 Class representing a banner view. It exposes some properties for modyfing the appearance and content.
 */
 final public class BaulyView: UIView {
-    
+            
     // MARK: Public properties
     
     /// Current configuration of banner's content.
@@ -40,26 +40,20 @@ final public class BaulyView: UIView {
         }
     }
     
-    /// Text diplayed in the main label of the banner.
-    @available(*, deprecated, message: "Use contentConfiguration property to set this value.")
-    public var title: String {
-        get { contentConfiguration.title ?? "" }
-        set { contentConfiguration.subtitle = newValue }
+    // MARK: Internal properties
+    var index = 0
+    var presentAnimator: UIViewPropertyAnimator! {
+        willSet { presentAnimator?.stopAnimation(true) }
     }
-    
-    /// Text displayed in the detail label of the banner.
-    @available(*, deprecated, message: "Use contentConfiguration property to set this value.")
-    public var subtitle: String? {
-        get { contentConfiguration.subtitle }
-        set { contentConfiguration.subtitle = newValue }
+    var dismissAnimator: UIViewPropertyAnimator! {
+        willSet { dismissAnimator?.stopAnimation(true) }
     }
-    
-    /// Image displayed in the banner. Should have equal width and height.
-    @available(*, deprecated, message: "Use contentConfiguration property to set this value.")
-    public var icon: UIImage? {
-        get { contentConfiguration.image }
-        set { contentConfiguration.image = newValue }
+    var dismissTask: Task<Void, Never>? {
+        willSet { dismissTask?.cancel() }
     }
+    let trackedTouchSubject: PassthroughSubject<(isTracking: Bool, withinBounds: Bool, offset: CGFloat), Never> = .init()
+    var wasPresented = false
+    var cancellables: Set<AnyCancellable> = []
         
     // MARK: Appearance
     
@@ -71,9 +65,7 @@ final public class BaulyView: UIView {
     }
     
     // MARK: Layout elements
-    
-    /* We hide elements initially so the stack is correctly sized depending on content. */
-    
+        
     /// Image view used for displaying icon.
     public private(set) lazy var iconView: UIImageView = {
         let im = UIImageView()
@@ -104,31 +96,36 @@ final public class BaulyView: UIView {
         return l
     }()
     
-    var wasPresented = false
+    private lazy var tapGesture: UIGestureRecognizer = {
+        let tap = UILongPressGestureRecognizer(target: self,
+                                               action: #selector(handleLongPress))
+        tap.delegate = self
+        tap.minimumPressDuration = 0
+        
+        return tap
+    }()
+    
+    private lazy var dragGesture: UIGestureRecognizer = {
+        let drag = UIPanGestureRecognizer(target: self,
+                                          action: #selector(handleDrag))
+        drag.delegate = self
+        
+        return drag
+    }()
     
     /// View used for displaying blur effect.
     private lazy var visualEffectView = UIVisualEffectView(effect:
                                                                     UIBlurEffect(style: backgroundBlurEffectStyle)
     )
     
-    private var highlightedAnimator: UIViewPropertyAnimator? {
+    private var highlightedAnimator: UIViewPropertyAnimator! {
         willSet { highlightedAnimator?.stopAnimation(true) }
-        didSet { highlightedAnimator?.startAnimation() }
     }
     
     /// Special layer used for creating rounded shadow.
     private var shadowLayer: CAShapeLayer!
-    private var tapCancellables: Set<AnyCancellable> = []
-    
-    private(set) lazy var tapGesturePublisher: AnyPublisher<UIGestureRecognizer, Never> = {
-        let tap = UILongPressGestureRecognizer()
-        tap.minimumPressDuration = 0
-        self.addGestureRecognizer(tap)
-        
-        return tap.publisher()
-            .map { $0 as UIGestureRecognizer }
-            .eraseToAnyPublisher()
-    }()
+    private var dragStartingLocation: CGPoint!
+    private var dragOffset: CGFloat = 0
     
     public var isHighlighted: Bool = false {
         didSet {
@@ -138,6 +135,8 @@ final public class BaulyView: UIView {
             setHighlighted(isHighlighted)
         }
     }
+    
+    class var dragLimitToAllowTouch: CGFloat { 12 }
         
     // MARK: Initialization
     
@@ -149,27 +148,32 @@ final public class BaulyView: UIView {
     required init?(coder: NSCoder) {
         fatalError("Na-uh")
     }
+        
+    var isDragGestureEnabled: Bool {
+        get { dragGesture.isEnabled }
+        set { dragGesture.isEnabled = newValue }
+    }
     
     public override func layoutSubviews() {
         super.layoutSubviews()
+        
         layer.cornerRadius = bounds.height / 2
-        
         visualEffectView.layer.cornerRadius = layer.cornerRadius
-        // Set shadow
-        guard shadowLayer == nil else {
-            return
-        }
-        shadowLayer = CAShapeLayer()
-        shadowLayer.path = UIBezierPath(roundedRect: bounds, cornerRadius: layer.cornerRadius).cgPath
-        shadowLayer.fillColor = UIColor.clear.cgColor
-
-        shadowLayer.shadowColor = UIColor.darkGray.cgColor
-        shadowLayer.shadowPath = shadowLayer.path
-        shadowLayer.shadowOffset = CGSize(width: 0, height: 2.0)
-        shadowLayer.shadowOpacity = 0.2
-        shadowLayer.shadowRadius = 16
         
-        layer.insertSublayer(shadowLayer, at: 0)
+        // Set shadow
+        if shadowLayer == nil {
+            shadowLayer = CAShapeLayer()
+            shadowLayer.path = UIBezierPath(roundedRect: bounds, cornerRadius: layer.cornerRadius).cgPath
+            shadowLayer.fillColor = UIColor.clear.cgColor
+
+            shadowLayer.shadowColor = UIColor.darkGray.cgColor
+            shadowLayer.shadowPath = shadowLayer.path
+            shadowLayer.shadowOffset = CGSize(width: 0, height: 2.0)
+            shadowLayer.shadowOpacity = 0.2
+            shadowLayer.shadowRadius = 16
+            
+            layer.insertSublayer(shadowLayer, at: 0)
+        }
     }
     
     public override var tintColor: UIColor! {
@@ -183,26 +187,6 @@ final public class BaulyView: UIView {
         titleLabel.textColor = tintColor
     }
     
-    /**
-     Registers closure to be called after banner is pressed by the user.
-     */
-    public func addTapHandler(_ action: @escaping () -> Void) {
-        tapGesturePublisher
-            .filter { $0.state == .ended }
-            .sink { _ in action() }
-            .store(in: &tapCancellables)
-    }
-    
-    /**
-     Registers asynchronous closure to be called after banner is pressed by the user.
-     */
-    public func addTapHandler(priortity: TaskPriority? = nil,
-                              _ action: @escaping () async -> Void) {
-        addTapHandler {
-            Task(priority: priortity) { await action() }
-        }
-    }
-    
 }
 
 // MARK: Private
@@ -211,6 +195,11 @@ private extension BaulyView {
     func commonInit() {
         visualEffectView.layer.masksToBounds = true
         setupView()
+        titleLabel.textColor = tintColor
+        
+        addGestureRecognizer(tapGesture)
+        addGestureRecognizer(dragGesture)
+        
         subviews.forEach { $0.isUserInteractionEnabled = false }
     }
     
@@ -222,6 +211,7 @@ private extension BaulyView {
             self.subtitleLabel.alpha = alpha
             self.iconView.alpha = alpha
         }
+        highlightedAnimator.startAnimation()
     }
     
     func applyConfiguration() {
@@ -271,6 +261,65 @@ private extension BaulyView {
             contentStack.centerXAnchor.constraint(equalTo: centerXAnchor),
             contentStack.widthAnchor.constraint(greaterThanOrEqualToConstant: 96),
         ])
+    }
+    
+    @objc func handleLongPress(_ sender: UILongPressGestureRecognizer) {
+        let location = sender.location(in: self)
+        let isWithinBounds = self.bounds
+            .insetBy(dx: -Self.dragLimitToAllowTouch, dy: -Self.dragLimitToAllowTouch)
+            .contains(location)
+        && (abs(dragOffset) < Self.dragLimitToAllowTouch)
+        
+        switch sender.state {
+        case .began, .changed:
+            isHighlighted = isWithinBounds
+            trackedTouchSubject.send((true, isWithinBounds, dragOffset))
+                                
+        case .ended:
+            isHighlighted = false
+            trackedTouchSubject.send((false, isWithinBounds, dragOffset))
+
+        case .cancelled:
+            isHighlighted = false
+            trackedTouchSubject.send((false, false, 0))
+
+        default:
+            break
+        }
+    }
+    
+    @objc func handleDrag(_ sender: UIPanGestureRecognizer) {
+        let location = sender.location(in: superview)
+        let dragLimit: CGFloat = Self.dragLimitToAllowTouch * 0.8
+        
+        switch sender.state {
+        case .began:
+            dragStartingLocation = location
+            
+        case .changed:
+            var offset = location.y - dragStartingLocation.y
+            
+            if offset > dragLimit {
+                offset = dragLimit * (1 + log10(offset / dragLimit))
+            }
+            dragOffset = offset
+            transform = CGAffineTransform(translationX: 0,
+                                          y: offset)
+            
+        case .ended, .cancelled:
+            dragOffset = 0
+            
+        default:
+            break
+        }
+    }
+    
+}
+
+extension BaulyView: UIGestureRecognizerDelegate {
+    
+    public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return true
     }
     
 }
