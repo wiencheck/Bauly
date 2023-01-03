@@ -47,29 +47,41 @@ public class Bauly {
     }
     
     /**
-     Presents new banner banner. If there are any banners on the screen, or pending in the queue, the new banner will be displayed as last unless stated otherwise in `presentationOptions`.
+     Presents new banner banner.
+     
+     If there are any banners on the screen, or pending in the queue, the new banner will be displayed as last unless stated otherwise in `presentationOptions`.
      - Parameters:
         - configuration: Configuration values for banner.
         - presentationOptions: Options for configuring how banner's presentation occurs.
+        - onTap: Closure called when user taps the presented banner.
         - completion: Closure called whenever banner status changes.
      */
     public class func present(withConfiguration configuration: BaulyView.Configuration,
-                 presentationOptions: Bauly.PresentationOptions = .init(),
-                 completion: (@MainActor (Bauly.PresentationState) -> Void)? = nil) {
+                              presentationOptions: Bauly.PresentationOptions = .init(),
+                              onTap: (@MainActor (BaulyView) -> Void)? = nil,
+                              completion: (@MainActor (Bauly.PresentationState) -> Void)? = nil) {
         presenter.present(withConfiguration: configuration,
                           presentationOptions: presentationOptions,
-                          completion: completion)
+                          completion: completion,
+                          onTap: onTap)
     }
     
     /**
      Dismisses currenly displayed banner, if there is any.
      - Parameters:
-        - completionHandler: Handler called after banner slides out of the screen.
+        - completion: Handler called after banner slides out of the screen.
      
-     If no banner is visible when calling this method, the `completionHandler` will not be called.
+     If no banner is visible when calling this method, the `completion` will not be called.
      */
-    public class func dismiss(completionHandler: (@MainActor () -> Void)? = nil) {
-        presenter.dismiss(completionHandler: completionHandler)
+    public class func dismiss(completion: (@MainActor () -> Void)? = nil) {
+        presenter.dismiss(completion: completion)
+    }
+    
+    /**
+     Removes pending banners from the queue.
+     */
+    public class func cancelPendingBanners() {
+        presenter.cancelPendingBanners()
     }
     
     @available(*, unavailable)
